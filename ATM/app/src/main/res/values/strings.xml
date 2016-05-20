@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">ATM</string>
+    <string name="title_activity_maps">Map</string>
+    <string name="title_activity_search_atm">search_atm</string>
+</resources>
