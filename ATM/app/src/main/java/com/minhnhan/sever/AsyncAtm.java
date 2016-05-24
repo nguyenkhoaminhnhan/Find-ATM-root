@@ -14,10 +14,10 @@ import org.json.JSONException;
 
 import java.io.IOException;
 
-public class AsyncLink extends AsyncTask<String, String, String> {
+public class AsyncAtm extends AsyncTask<String, String, String> {
     private AsyncListener listener;
 
-    public AsyncLink(AsyncListener listener) {
+    public AsyncAtm(AsyncListener listener) {
         this.listener = listener;
     }
 
@@ -36,7 +36,7 @@ public class AsyncLink extends AsyncTask<String, String, String> {
         super.onPostExecute(result);
         try {
             AtmDetail dataAtm = new AtmDetail(new JSONArray(result));
-            DataManager.getInstance().setAtmDetail("0", dataAtm);
+            DataManager.getInstance().setAtmDetail("atm", dataAtm);
             if (listener != null)
                 listener.onAsyncComplete();
         } catch (JSONException e) {

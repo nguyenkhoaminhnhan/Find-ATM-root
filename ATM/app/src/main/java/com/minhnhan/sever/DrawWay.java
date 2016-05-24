@@ -43,9 +43,9 @@ public class DrawWay {
 
         return url;
     }
-    public static void drawPath(String result, GoogleMap myMap, Polyline line, LatLng startLatLng, LatLng endLatLng ) {
+    public static Polyline drawPath(String result, GoogleMap myMap, Polyline line, LatLng startLatLng, LatLng endLatLng ) {
         if (line != null) {
-            myMap.clear();
+            line.remove();
         }
         //Add marker for my destination
         myMap.addMarker(new MarkerOptions().position(endLatLng).icon(
@@ -68,9 +68,11 @@ public class DrawWay {
             }
             line = myMap.addPolyline(options);
 
+            return line;
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return null;
     }
 
     public static List<LatLng> decodePoly(String encoded) {

@@ -1,7 +1,8 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_height="match_parent"
-    android:layout_width="match_parent">
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
     <fragment
         android:id="@+id/map"
         android:name="com.google.android.gms.maps.SupportMapFragment"
@@ -10,33 +11,32 @@
         tools:context="com.minhnhan.atm.MapsActivity" />
 
     <LinearLayout
-        android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentStart="true">
+        android:layout_centerHorizontal="true"
+        android:orientation="horizontal">
+
         <ImageButton
             android:id="@+id/imgbtn_atm_nearby"
             android:layout_width="100px"
             android:layout_height="100px"
-            android:scaleType="centerCrop"
-            android:background="#00ffffff"
-            android:layout_margin="@dimen/fab_margin"
-            android:src="@drawable/my_img_button"
             android:layout_alignParentBottom="true"
-            android:layout_alignParentEnd="true" />
+            android:layout_alignParentEnd="true"
+            android:layout_margin="@dimen/fab_margin"
+            android:background="#00ffffff"
+            android:scaleType="centerCrop"
+            android:src="@drawable/my_position" />
+
         <ImageButton
-            android:id="@+id/imgbtn_search_atm"
+            android:id="@+id/imgbtn_atm_search"
             android:layout_width="100px"
             android:layout_height="100px"
-            android:scaleType="centerCrop"
-            android:background="#00ffffff"
-            android:layout_margin="@dimen/fab_margin"
-            android:src="@drawable/my_search_button"
             android:layout_alignParentBottom="true"
-            android:layout_alignParentEnd="true" />
+            android:layout_alignParentEnd="true"
+            android:layout_margin="@dimen/fab_margin"
+            android:background="#00ffffff"
+            android:scaleType="centerCrop"
+            android:src="@drawable/atm_search" />
     </LinearLayout>
-
-
 </RelativeLayout>

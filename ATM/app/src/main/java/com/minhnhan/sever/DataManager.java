@@ -23,16 +23,16 @@ public class DataManager {
 
     }
 
-    public void setAtmDetail(String atmId, AtmDetail atmDetail) {
+    public void setAtmDetail(String key, AtmDetail atmDetail) {
         if (atmDetails == null)
             atmDetails = new HashMap<String, AtmDetail>();
-        atmDetails.put(atmId, atmDetail);
+        atmDetails.put(key, atmDetail);
     }
 
-    public AtmDetail getAtmDetail(String atmId) {
+    public AtmDetail getAtmDetail(String key) {
         if (atmDetails == null)
             return null;
-        return atmDetails.containsKey(atmId) ? atmDetails.get(atmId)
+        return atmDetails.containsKey(key) ? atmDetails.get(key)
                 : null;
     }
 
