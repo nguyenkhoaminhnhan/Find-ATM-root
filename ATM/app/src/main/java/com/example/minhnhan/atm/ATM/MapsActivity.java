@@ -2,14 +2,16 @@ package com.example.minhnhan.atm.ATM;
 
 import android.Manifest;
 import android.app.AlertDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
+import android.view.View;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 import com.com.minhnhan.models.AtmDetail;
@@ -26,6 +28,8 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.Circle;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -46,6 +50,7 @@ public class MapsActivity extends FragmentActivity implements
     private AtmDetail data;
 
     Polyline line;
+    Circle circle;
 
     LocationRequest mLocationRequest;
     private GoogleApiClient mGoogleApiClient;
@@ -59,6 +64,14 @@ public class MapsActivity extends FragmentActivity implements
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+        final ImageButton atmNearBy = (ImageButton)findViewById(R.id.imgbtn_atm_nearby);
+        atmNearBy.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mMap.clear();
+                atmNearBy();
+            }
+        });
     }
 
     private void getMyLocation() {
@@ -96,6 +109,8 @@ public class MapsActivity extends FragmentActivity implements
 
             @Override
             public boolean onMarkerClick(Marker arg0) {
+                if (circle != null)
+                    circle.remove();
                 final LatLng destinaton = new LatLng(arg0.getPosition().latitude, arg0.getPosition().longitude);
                 if (myCurrent.latitude != destinaton.latitude && myCurrent.longitude != destinaton.longitude) {
                     String findWayLink = DrawWay.getDirectionsUrl(myCurrent, destinaton);
@@ -115,19 +130,7 @@ public class MapsActivity extends FragmentActivity implements
         CheckConnect connect = new CheckConnect();
         if (connect.isNetworkAvailable(this)) {
             if (connect.isGPSEnabled(this)) {
-                getMyLocation();
-                // lay ds ATM
-                String link = "http://find-atm.apphb.com/v1/GetAtmList?page=0&size=10";
-                AsyncLink getData = new AsyncLink(new AsyncListener() {
-                    @Override
-                    public void onAsyncComplete() {
-                        data = DataManager.getInstance().getAtmDetail("0");
-                        for (int i = 0; i < data.atmDetail.size(); i++) {
-                            addLocationMarker(data.atmDetail.get(i).lat, data.atmDetail.get(i).lng, data.atmDetail.get(i).name);
-                        }
-                    }
-                });
-                getData.execute(link);
+                atmNearBy();
             } else {
                 //Show message about GPS problem and exit this app
                 AlertDialog.Builder dlgAlert = new AlertDialog.Builder(this);
@@ -165,12 +168,13 @@ public class MapsActivity extends FragmentActivity implements
     }
 
     private void moveToMyLocation(LatLng myNewCurrent) {
-        Log.d("debug", "move to current location");
+        Toast.makeText(this, myNewCurrent.latitude + "," + myNewCurrent.longitude, Toast.LENGTH_SHORT).show();
         myCurrent = myNewCurrent;
         MarkerOptions markerOptions = new MarkerOptions();
         markerOptions.position(myCurrent);
         markerOptions.title("You are here!").icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_user_marker));
         currLocationMarker = mMap.addMarker(markerOptions);
+
     }
 
     private void addLocationMarker(double lat, double lng, String discription) {
@@ -204,10 +208,18 @@ public class MapsActivity extends FragmentActivity implements
             //mGoogleMap.clear();
             LatLng myNewLocation = new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude());
             moveToMyLocation(myNewLocation);
-            double a = DistanceAB.distance(myCurrent, myNewLocation);
+            //Range 1km from my position
+            if (circle != null)
+                circle.remove();
+            circle = mMap.addCircle(new CircleOptions()
+                    .center(myCurrent)
+                    .radius(1000)
+                    .strokeColor(Color.rgb(0, 179, 253))
+                    .strokeWidth(1)
+                    .fillColor(Color.argb(18, 0, 179, 253)));
             //zoom to current position:
             CameraPosition cameraPosition = new CameraPosition.Builder()
-                    .target(myCurrent).zoom(14).build();
+                    .target(myCurrent).zoom(15).build();
 
             mMap.animateCamera(CameraUpdateFactory
                     .newCameraPosition(cameraPosition));
@@ -215,8 +227,8 @@ public class MapsActivity extends FragmentActivity implements
         }
 
         mLocationRequest = new LocationRequest();
-        mLocationRequest.setInterval(60000); //60 seconds
-        mLocationRequest.setFastestInterval(50000); //50 seconds
+        mLocationRequest.setInterval(6000); //60 seconds
+        mLocationRequest.setFastestInterval(5000); //50 seconds
         mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
         //mLocationRequest.setSmallestDisplacement(0.1F); //1/10 meter
 
@@ -240,6 +252,8 @@ public class MapsActivity extends FragmentActivity implements
             currLocationMarker.remove();
         }
         moveToMyLocation(myNewLocation);
+
+
     }
 
     @Override
@@ -254,5 +268,24 @@ public class MapsActivity extends FragmentActivity implements
                 .addOnConnectionFailedListener(this)
                 .addApi(LocationServices.API)
                 .build();
+    }
+    public void atmNearBy(){
+        getMyLocation();
+        // lay ds ATM
+        String link = "http://find-atm.apphb.com/v1/GetAtmList";
+        AsyncLink getData = new AsyncLink(new AsyncListener() {
+            @Override
+            public void onAsyncComplete() {
+                data = DataManager.getInstance().getAtmDetail("0");
+                for (int i = 0; i < data.atmDetail.size(); i++) {
+                    LatLng atmLatLng = new LatLng(data.atmDetail.get(i).lat, data.atmDetail.get(i).lng);
+                    if (DistanceAB.distance(myCurrent, atmLatLng) < 1000) {
+                        addLocationMarker(data.atmDetail.get(i).lat, data.atmDetail.get(i).lng, data.atmDetail.get(i).name);
+                    }
+
+                }
+            }
+        });
+        getData.execute(link);
     }
 }
