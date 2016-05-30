@@ -18,7 +18,7 @@ public class Atm {
     private final String CITY = "City";
 
     public long id;
-    public String bankId;
+    public long bankId;
     public String name;
     public double lat;
     public double lng;
@@ -30,7 +30,7 @@ public class Atm {
             if (object.has(ID))
                 id = Long.parseLong(object.getString(ID));
             if (object.has(BANKID))
-                bankId = object.getString(BANKID);
+                bankId = Long.parseLong(object.getString(BANKID));
             if (object.has(NAME))
                 name = object.getString(NAME);
             if (object.has(LAT))

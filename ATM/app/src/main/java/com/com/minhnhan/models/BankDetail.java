@@ -1,7 +1,6 @@
 package com.com.minhnhan.models;
 
 import org.json.JSONArray;
-import org.json.JSONObject;
 
 import java.util.ArrayList;
 
@@ -9,20 +8,20 @@ import java.util.ArrayList;
  * Created by MinhNhan on 27/04/2016.
  * Parse the Json from server to AtmDetail List
  */
-public class AtmDetail  {
+public class BankDetail {
 
-    public ArrayList<Atm> atmDetail;
-    public AtmDetail() {
-        atmDetail = new ArrayList<Atm>();
+    public ArrayList<Bank> bankDetail;
+    public BankDetail(){
+        bankDetail = new ArrayList<Bank>();
     }
-    public AtmDetail(JSONArray object) {
+    public BankDetail(JSONArray object) {
         try {
-                atmDetail = new ArrayList<Atm>();
+            bankDetail = new ArrayList<Bank>();
 
                 for (int i = 0; i < object.length(); i++) {
-                    Atm atm = new Atm(
+                    Bank bank = new Bank(
                             object.getJSONObject(i));
-                    atmDetail.add(atm);
+                    bankDetail.add(bank);
                 }
         } catch (Exception e) {
             e.printStackTrace();

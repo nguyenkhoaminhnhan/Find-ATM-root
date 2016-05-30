@@ -3,6 +3,7 @@ package com.example.minhnhan.atm.ATM;
 import android.Manifest;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
@@ -35,6 +36,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.minhnhan.sever.AsyncAtm;
+import com.minhnhan.sever.AsyncBank;
 import com.minhnhan.sever.AsyncListener;
 import com.minhnhan.sever.AsyncWay;
 import com.minhnhan.sever.CheckConnect;
@@ -71,6 +73,8 @@ public class MapsActivity extends FragmentActivity implements
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
+        //find atm nearby button action event click
         final ImageButton atmNearBy = (ImageButton) findViewById(R.id.imgbtn_atm_nearby);
         atmNearBy.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -88,6 +92,23 @@ public class MapsActivity extends FragmentActivity implements
                 //move to my position
                 moveToMyLocation(myCurrent);
                 decoMyLocation(myCurrent);
+            }
+        });
+
+        //search atm action click
+        final ImageButton atmSearch = (ImageButton) findViewById(R.id.imgbtn_atm_search);
+        atmSearch.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String link = "http://find-atm.apphb.com/v1/GetBankList";
+                AsyncBank getBankData = new AsyncBank(new AsyncListener() {
+                    @Override
+                    public void onAsyncComplete() {
+                        Intent searchActivity = new Intent(MapsActivity.this, SearchAtmActivity.class);
+                        startActivity(searchActivity);
+                    }
+                });
+                getBankData.execute(link);
             }
         });
     }
@@ -150,7 +171,6 @@ public class MapsActivity extends FragmentActivity implements
         CheckConnect connect = new CheckConnect();
         if (connect.isNetworkAvailable(this)) {
             if (connect.isGPSEnabled(this)) {
-                getMyLocation();
                 // lay ds ATM
                 String link = "http://find-atm.apphb.com/v1/GetAtmList";
                 AsyncAtm getData = new AsyncAtm(new AsyncListener() {
@@ -161,6 +181,8 @@ public class MapsActivity extends FragmentActivity implements
                     }
                 });
                 getData.execute(link);
+
+                getMyLocation();
             } else {
                 //Show message about GPS problem and exit this app
                 AlertDialog.Builder dlgAlert = new AlertDialog.Builder(this);
@@ -246,8 +268,8 @@ public class MapsActivity extends FragmentActivity implements
         }
 
         mLocationRequest = new LocationRequest();
-        mLocationRequest.setInterval(6000); //60 seconds
-        mLocationRequest.setFastestInterval(5000); //50 seconds
+        mLocationRequest.setInterval(60000); //60 seconds
+        mLocationRequest.setFastestInterval(50000); //50 seconds
         mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
         //mLocationRequest.setSmallestDisplacement(0.1F); //1/10 meter
 
@@ -283,24 +305,24 @@ public class MapsActivity extends FragmentActivity implements
                 .build();
     }
 
-    //draw marker for all atm nearby 1km
+    //draw marker for all atm nearby 2km
     public void atmNearBy(AtmDetail atmDetail) {
         data = atmDetail;
         for (int i = 0; i < data.atmDetail.size(); i++) {
             LatLng temp = new LatLng(data.atmDetail.get(i).lat, data.atmDetail.get(i).lng);
-            if (DistanceAB.distance(myCurrent, temp) < 1000)
+            if (DistanceAB.distance(myCurrent, temp) < 2000)
                 addLocationMarker(data.atmDetail.get(i).lat, data.atmDetail.get(i).lng, data.atmDetail.get(i).name);
         }
     }
 
     //draw circle position range and move camera to my position
     public void decoMyLocation(LatLng myNewCurrent) {
-        //Range 1km from my position
+        //Range 2km from my position
         if (circle != null)
             circle.remove();
         circle = mMap.addCircle(new CircleOptions()
                 .center(myNewCurrent)
-                .radius(1000)
+                .radius(2000)
                 .strokeColor(Color.rgb(0, 179, 253))
                 .strokeWidth(1)
                 .fillColor(Color.argb(18, 0, 179, 253)));
