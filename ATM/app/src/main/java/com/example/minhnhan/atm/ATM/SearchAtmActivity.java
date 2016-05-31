@@ -1,7 +1,7 @@
 package com.example.minhnhan.atm.ATM;
 
+import android.content.Intent;
 import android.os.Bundle;
-import android.provider.ContactsContract;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.AdapterView;
@@ -11,11 +11,9 @@ import android.widget.Spinner;
 import com.com.minhnhan.adapters.BankAdapter;
 import com.com.minhnhan.adapters.DistAndCityAdapter;
 import com.com.minhnhan.models.AdressDetail;
-import com.com.minhnhan.models.Atm;
 import com.com.minhnhan.models.AtmDetail;
 import com.com.minhnhan.models.Bank;
 import com.example.minhnhan.atm.R;
-import com.google.android.gms.maps.model.Marker;
 import com.minhnhan.sever.DataManager;
 
 import java.util.ArrayList;
@@ -76,7 +74,11 @@ public class SearchAtmActivity extends AppCompatActivity {
                         }
                     }
                 }
-                DataManager.getInstance().setSearchDetail("search",search);
+                DataManager.getInstance().setSearchDetail("search", search);
+                Intent i = new Intent(SearchAtmActivity.this, MapsActivity.class);
+                //status search
+                MapsActivity.Status=1;
+                startActivity(i);
                 finish();
             }
         });

@@ -35,7 +35,6 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
-import com.minhnhan.sever.AsyncAtm;
 import com.minhnhan.sever.AsyncBank;
 import com.minhnhan.sever.AsyncListener;
 import com.minhnhan.sever.AsyncWay;
@@ -48,6 +47,7 @@ import java.util.ArrayList;
 public class MapsActivity extends FragmentActivity implements
         OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
 
+    public static int Status = 0;
     private static final String TAG = "MapsActivity";
     private LatLng myCurrent = new LatLng(0, 0);//my LatLong position on map
     private GoogleMap mMap;
@@ -79,13 +79,15 @@ public class MapsActivity extends FragmentActivity implements
         atmNearBy.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //remove all atm mark in my position range
-                for (int i = 0; i < atmListMarker.size(); i++) {
-                    atmListMarker.get(i).remove();
+                if (atmListMarker.size() > 0) {
+                    //remove all atm mark in my position range
+                    for (int i = 0; i < atmListMarker.size(); i++) {
+                        atmListMarker.get(i).remove();
+                    }
+                    atmListMarker.clear();
                 }
-                atmListMarker.clear();
                 //remove line path on map
-                if(line!=null)
+                if (line != null)
                     line.remove();
                 //get atm list
                 atmNearBy(data);
@@ -106,6 +108,7 @@ public class MapsActivity extends FragmentActivity implements
                     public void onAsyncComplete() {
                         Intent searchActivity = new Intent(MapsActivity.this, SearchAtmActivity.class);
                         startActivity(searchActivity);
+                        finish();
                     }
                 });
                 getBankData.execute(link);
@@ -160,6 +163,12 @@ public class MapsActivity extends FragmentActivity implements
                             String wayData = DataManager.getInstance().getWayJson();
                             //draw path to the map
                             line = DrawWay.drawPath(wayData, mMap, line, myCurrent, destinaton);
+                            CameraPosition cameraPosition = new CameraPosition.Builder()
+                                    .target(destinaton).zoom(14).build();
+
+                            mMap.animateCamera(CameraUpdateFactory
+                                    .newCameraPosition(cameraPosition));
+
                         }
                     });
                     getData.execute(findWayLink);
@@ -171,17 +180,6 @@ public class MapsActivity extends FragmentActivity implements
         CheckConnect connect = new CheckConnect();
         if (connect.isNetworkAvailable(this)) {
             if (connect.isGPSEnabled(this)) {
-                // lay ds ATM
-                String link = "http://find-atm.apphb.com/v1/GetAtmList";
-                AsyncAtm getData = new AsyncAtm(new AsyncListener() {
-                    @Override
-                    public void onAsyncComplete() {
-                        atmNearBy(DataManager.getInstance().getAtmDetail("atm"));
-
-                    }
-                });
-                getData.execute(link);
-
                 getMyLocation();
             } else {
                 //Show message about GPS problem and exit this app
@@ -192,8 +190,8 @@ public class MapsActivity extends FragmentActivity implements
                         new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int which) {
                                 //dismiss the dialog
-                                //finish();
-                                //System.exit(0);
+                                finish();
+                                System.exit(0);
                             }
                         });
                 dlgAlert.create().show();
@@ -209,8 +207,8 @@ public class MapsActivity extends FragmentActivity implements
                     new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int which) {
                             //dismiss the dialog
-                            //finish();
-                            //System.exit(0);
+                            finish();
+                            System.exit(0);
                         }
                     });
             dlgAlert.create().show();
@@ -259,12 +257,17 @@ public class MapsActivity extends FragmentActivity implements
                 mGoogleApiClient);
         if (mLastLocation != null) {
             //place marker at current position
-            //mGoogleMap.clear();
             LatLng myNewLocation = new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude());
             moveToMyLocation(myNewLocation);
-            double a = DistanceAB.distance(myCurrent, myNewLocation);
+
+            //decoration for my current position
             decoMyLocation(myCurrent);
 
+            //find atm nearby 2km
+            if (Status == 0)
+                atmNearBy(DataManager.getInstance().getAtmDetail("atm"));
+            else
+                atmSearch(DataManager.getInstance().getSearchDetail("search"));
         }
 
         mLocationRequest = new LocationRequest();
@@ -305,13 +308,58 @@ public class MapsActivity extends FragmentActivity implements
                 .build();
     }
 
-    //draw marker for all atm nearby 2km
+    //add marker for all atm nearby 2km
     public void atmNearBy(AtmDetail atmDetail) {
         data = atmDetail;
         for (int i = 0; i < data.atmDetail.size(); i++) {
             LatLng temp = new LatLng(data.atmDetail.get(i).lat, data.atmDetail.get(i).lng);
             if (DistanceAB.distance(myCurrent, temp) < 2000)
                 addLocationMarker(data.atmDetail.get(i).lat, data.atmDetail.get(i).lng, data.atmDetail.get(i).name);
+        }
+    }
+
+    //add marker for atm after user search
+    public void atmSearch(AtmDetail atmDetail) {
+        if (atmDetail.atmDetail.size() > 0) {
+            data = atmDetail;
+
+            int size = data.atmDetail.size();
+            for (int i = 0; i < size; i++) {
+                addLocationMarker(data.atmDetail.get(i).lat, data.atmDetail.get(i).lng, data.atmDetail.get(i).name);
+            }
+            LatLng finalAtm = new LatLng(data.atmDetail.get(size - 1).lat, data.atmDetail.get(size - 1).lng);
+            //zoom to current position:
+            CameraPosition cameraPosition = new CameraPosition.Builder()
+                    .target(finalAtm).zoom(13).build();
+
+            mMap.animateCamera(CameraUpdateFactory
+                    .newCameraPosition(cameraPosition));
+        } else {
+            AlertDialog.Builder dlgAlert = new AlertDialog.Builder(this);
+            dlgAlert.setMessage("Không thể tìm thấy ATM! Chúng tôi sẽ cập nhật thêm!");
+            dlgAlert.setTitle("Xin lỗi");
+            dlgAlert.setPositiveButton("Ok",
+                    new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            if (atmListMarker.size() > 0) {
+                                //remove all atm mark in my position range
+                                for (int i = 0; i < atmListMarker.size(); i++) {
+                                    atmListMarker.get(i).remove();
+                                }
+                                atmListMarker.clear();
+                            }
+                            //remove line path on map
+                            if (line != null)
+                                line.remove();
+                            //get atm list
+                            data = DataManager.getInstance().getAtmDetail("atm");
+                            atmNearBy(data);
+                            //move to my position
+                            moveToMyLocation(myCurrent);
+                            decoMyLocation(myCurrent);
+                        }
+                    });
+            dlgAlert.create().show();
         }
     }
 
@@ -333,4 +381,5 @@ public class MapsActivity extends FragmentActivity implements
         mMap.animateCamera(CameraUpdateFactory
                 .newCameraPosition(cameraPosition));
     }
+
 }
